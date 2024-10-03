@@ -1,0 +1,24 @@
+.marquee-container {
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  .marquee-track {
+    display: flex;
+    animation: marquee linear infinite;
+  }
+  
+  .marquee-content {
+    white-space: nowrap;
+    padding-right: 100%; /* Ensure space between clones */
+  }
+  
+  @keyframes marquee {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+  

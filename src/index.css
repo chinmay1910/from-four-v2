@@ -1,0 +1,92 @@
+@import url('https://fonts.googleapis.com/css2?family=Onest:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Onest:wght@100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body{
+ font-family: 'Manrope', sans-serif;
+}
+
+h1,h2,h3,h4,h5,h6{
+  font-family: 'Onest', sans-serif;
+}
+
+h1 { @apply text-4xl font-bold  dark:text-slate-50; }
+h2 { @apply text-3xl font-semibold dark:text-slate-50; }
+h3 { @apply text-2xl font-semibold dark:text-slate-50; }
+h4 { @apply text-xl font-medium dark:text-slate-50; }
+h5 { @apply text-lg font-medium dark:text-slate-50; }
+h6 { @apply text-base font-medium dark:text-slate-50; }
+
+.p {
+  @apply text-base leading-relaxed;
+}
+
+.p-light {
+  @apply text-gray-400 dark:text-gray-400;
+}
+
+.p-dark {
+  @apply text-gray-800 dark:text-gray-100;
+}
+
+.p-muted {
+  @apply text-gray-500 dark:text-gray-400;
+}
+
+.p-highlight {
+  @apply text-indigo-600 dark:text-blue-400 font-medium;
+}
+
+.p-success {
+  @apply text-green-600 dark:text-green-400;
+}
+
+.p-warning {
+  @apply text-yellow-600 dark:text-yellow-400;
+}
+
+.p-error {
+  @apply text-red-600 dark:text-red-400;
+}
+
+.p-small {
+  @apply text-sm;
+}
+
+.p-large {
+  @apply text-lg;
+}
+
+.p-mono {
+  @apply font-mono text-sm;
+}
+
+.p-data {
+  @apply font-semibold text-gray-700 dark:text-gray-200;
+}
+
+@layer utilities {
+  .scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 20px;
+  }
+
+  .scrollbar::-webkit-scrollbar-track {
+    border-radius: 100vh;
+    background: #334155;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb {
+    background: #71717a;
+    border-radius: 100vh;
+  }
+
+  .scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+}
+
+
