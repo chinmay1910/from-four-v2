@@ -444,6 +444,135 @@ const FeatureExtraction: React.FC = () => {
     console.log('Main chart data:', data);
   }, [steppedLineData, data]);
 
+  // Add this new function after other callbacks
+  const exportMarkersToCSV = useCallback(() => {
+    // Create CSV header
+    const headers = [
+      'Name',
+      'Order',
+      'Frequency (Hz)',
+      'Band Size (Hz)',
+      'Harmonics',
+      'Sub-Harmonics',
+      'Axis',
+      'Side Bands',
+      'Count',
+      'Spacing',
+      'Left/Right'
+    ];
+    
+    // Convert markers data to CSV rows
+    const csvData = markerOrder.map(orderIndex => {
+      const marker = markers[orderIndex];
+      const leftRight = [
+        marker.sideBands.leftEnabled ? 'L' : '',
+        marker.sideBands.rightEnabled ? 'R' : ''
+      ].filter(Boolean).join('/');
+      
+      return [
+        marker.name,
+        (marker.frequency / baseFrequency).toFixed(2),
+        marker.frequency,
+        marker.bandWidth,
+        marker.harmonics,
+        marker.subHarmonics,
+        marker.axis.toUpperCase() + '-Axis',
+        marker.sideBands.enabled ? 'Yes' : 'No',
+        marker.sideBands.count,
+        marker.sideBands.spacing,
+        leftRight
+      ].join(',');
+    });
+
+    // Combine headers and data
+    const csvContent = [headers.join(','), ...csvData].join('\n');
+    
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `${analysisName || 'markers'}_export.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [markers, markerOrder, baseFrequency, analysisName]);
+
+  // Update the importMarkersFromCSV function
+  const importMarkersFromCSV = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string;
+          const lines = content.split('\n').filter(line => line.trim() !== ''); // Filter empty lines
+          const headers = lines[0].split(',');
+          
+          console.log('CSV Headers:', headers); // Debug log
+          console.log('CSV Lines:', lines); // Debug log
+
+          const importedMarkers: Marker[] = lines.slice(1).map((line, idx) => {
+            const values = line.split(',').map(value => value.trim());
+            console.log(`Processing line ${idx + 1}:`, values); // Debug log
+            
+            const marker: Marker = {
+              name: values[0], // Name
+              frequency: Math.round(Number(values[2])), // Frequency (Hz)
+              bandWidth: Number(values[3]), // Band Size (Hz)
+              harmonics: Number(values[4]), // Harmonics
+              subHarmonics: Number(values[5]), // Sub-Harmonics
+              axis: values[6].split('-')[0].toLowerCase() as Axis, // Axis (X/Y/Z)
+              color: generateColor(Math.random() * 360),
+              visible: true,
+              sideBands: {
+                enabled: values[7].trim().toLowerCase() === 'yes', // Side Bands
+                count: Number(values[8]), // Count
+                spacing: Number(values[9]), // Spacing
+                leftEnabled: values[10].includes('L'), // Left enabled
+                rightEnabled: values[10].includes('R')  // Right enabled
+              }
+            };
+
+            // Validate the marker data
+            if (isNaN(marker.frequency) || isNaN(marker.bandWidth) || 
+                isNaN(marker.harmonics) || isNaN(marker.subHarmonics)) {
+              throw new Error(`Invalid numeric values in line ${idx + 1}: ${line}`);
+            }
+
+            return updateHarmonicMarkers(marker); // Important: Update harmonics before returning
+          });
+
+          console.log('Imported markers:', importedMarkers); // Debug log
+
+          // Update state in a single batch
+          setMarkers(importedMarkers);
+          setMarkerOrder(Array.from({ length: importedMarkers.length }, (_, i) => i));
+          
+          // Reset the file input
+          if (event.target) {
+            event.target.value = '';
+          }
+
+        } catch (error) {
+          console.error('Error importing markers:', error);
+          alert(`Error importing markers: ${error.message}`);
+        }
+      };
+      reader.readAsText(file);
+    }
+  }, [updateHarmonicMarkers]); // Add updateHarmonicMarkers to dependencies
+
+  // Add this ref for the import input
+  const importFileRef = useRef<HTMLInputElement>(null);
+
+  // Add this debug useEffect
+  useEffect(() => {
+    console.log('Current markers:', markers);
+    console.log('Current marker order:', markerOrder);
+  }, [markers, markerOrder]);
+
   return (
     <ErrorBoundary fallback={<div>Something went wrong</div>}>
       <Card className="w-full mx-auto mt-4">
@@ -690,8 +819,33 @@ const FeatureExtraction: React.FC = () => {
                           <th className="text-left p-2 w-[80px] dark:bg-slate-900 bg-neutral-100">Count</th>
                           <th className="text-left p-2 w-[80px] dark:bg-slate-900 bg-neutral-100">Spacing</th>
                           <th className="text-left p-2 w-[100px] dark:bg-slate-900 bg-neutral-100 rounded-r-lg">Left/Right</th>
-                          
-                          <th className="text-left p-2 border-spacing-5 w-[120px] rounded-r-lg">Actions</th>
+                          <th className="text-right p-2 w-[160px]">
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="outline" 
+                                onClick={exportMarkersToCSV}
+                                className="flex items-center gap-2"
+                              >
+                                <FlipVertical2 className="w-4 h-4" />
+                                Export
+                              </Button>
+                              <input
+                                type="file"
+                                id="csvFileInput"
+                                onChange={importMarkersFromCSV}
+                                style={{ display: 'none' }}
+                                accept=".csv"
+                              />
+                              <Button 
+                                variant="outline" 
+                                onClick={() => document.getElementById('csvFileInput')?.click()}
+                                className="flex items-center gap-2"
+                              >
+                                <Scan className="w-4 h-4" />
+                                Import
+                              </Button>
+                            </div>
+                          </th>
                         </tr>
                       </thead>
                       <tbody className='mr-5'>
